@@ -30,7 +30,8 @@ export default async function HomePage() {
               name="q"
               type="text"
               placeholder="Search a professor or course..."
-              className="flex-1 px-5 py-3.5 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-white shadow-lg"
+              className="flex-1 px-5 py-3.5 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-white shadow-lg"
+              style={{ color: '#111827' }}
             />
             <button
               type="submit"

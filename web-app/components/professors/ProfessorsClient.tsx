@@ -155,7 +155,7 @@ export default function ProfessorsClient({
       </div>
 
       {/* Grid */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 min-h-screen">
         {filtered.length === 0 ? (
           <div className="text-center py-24 text-gray-400">
             <p className="text-lg font-medium">No professors found</p>

@@ -1,6 +1,8 @@
-import { prisma } from '@/lib/db'
+import { prisma } from '../../../lib/db'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
+import { Metadata } from 'next'
 
 interface Props {
   params: Promise<{
@@ -8,9 +10,23 @@ interface Props {
   }>
 }
 
-export default async function ProfessorProfilePage({ params }: Props) {
-  const resolvedParams = await params;
+// 1. Dynamic Metadata for Browser Tab Titles
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params
+  const prof = await prisma.professor.findUnique({
+    where: { id: resolvedParams.id },
+    select: { name: true }
+  })
+  
+  return {
+    title: prof ? `${prof.name} — DIT University Reviews` : 'Professor Not Found',
+  }
+}
 
+export default async function ProfessorProfilePage({ params }: Props) {
+  const resolvedParams = await params
+
+  // Ensure your Prisma schema has qualification and specialisation if you are querying them!
   const professor = await prisma.professor.findUnique({
     where: { id: resolvedParams.id },
     // include: { reviews: true } <-- We will uncomment this when reviews exist!
@@ -35,10 +51,17 @@ export default async function ProfessorProfilePage({ params }: Props) {
             
             {/* Left: Info & Avatar */}
             <div className="flex flex-col md:flex-row gap-6 items-start">
-              {/* Large Avatar */}
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-100 flex-shrink-0 border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
+              
+              {/* Large Avatar using next/image */}
+              <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-100 flex-shrink-0 border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
                 {professor.photoUrl ? (
-                  <img src={professor.photoUrl} alt={professor.name} className="w-full h-full object-cover" />
+                  <Image 
+                    src={professor.photoUrl} 
+                    alt={professor.name} 
+                    fill 
+                    sizes="(max-width: 768px) 96px, 128px"
+                    className="object-cover" 
+                  />
                 ) : (
                   <svg className="w-12 h-12 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -68,13 +91,18 @@ export default async function ProfessorProfilePage({ params }: Props) {
             </div>
 
             {/* Right: Rating Stub */}
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 text-center min-w-[200px] w-full md:w-auto">
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 text-center min-w-[200px] w-full md:w-auto flex flex-col">
               <div className="text-5xl font-black text-gray-300 mb-2">N/A</div>
               <p className="text-sm text-gray-500 font-medium">0 Ratings</p>
-              <button disabled className="mt-4 w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-xl opacity-50 cursor-not-allowed">
+              
+              {/* Functional Login Routing */}
+              <Link 
+                href="/login" 
+                className="mt-4 w-full bg-blue-600 hover:bg-blue-700 transition-colors text-white font-bold py-2 px-4 rounded-xl text-center"
+              >
                 Rate Professor
-              </button>
-              <p className="text-xs text-gray-400 mt-2">Login required</p>
+              </Link>
+              <p className="text-xs text-gray-400 mt-2">Login to leave a review</p>
             </div>
             
           </div>
@@ -106,8 +134,39 @@ export default async function ProfessorProfilePage({ params }: Props) {
             )}
           </div>
 
-          {/* Right Column: Reviews (Placeholder) */}
-          <div className="md:col-span-1">
+          {/* Right Column: Sidebar Data & Reviews */}
+          <div className="md:col-span-1 space-y-8">
+            
+            {/* Credentials Card (Optional metadata rendering) */}
+            {(professor.email || (professor as any).qualification || (professor as any).specialisation) && (
+              <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Credentials</h2>
+                <div className="space-y-4 text-sm text-gray-600">
+                  {professor.email && (
+                    <div>
+                      <span className="block font-semibold text-gray-900 mb-1">Email</span>
+                      <a href={`mailto:${professor.email}`} className="text-blue-600 hover:underline break-all">
+                        {professor.email}
+                      </a>
+                    </div>
+                  )}
+                  {(professor as any).qualification && (
+                    <div>
+                      <span className="block font-semibold text-gray-900 mb-1">Qualification</span>
+                      <p>{(professor as any).qualification}</p>
+                    </div>
+                  )}
+                  {(professor as any).specialisation && (
+                    <div>
+                      <span className="block font-semibold text-gray-900 mb-1">Specialisation</span>
+                      <p>{(professor as any).specialisation}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Reviews Placeholder */}
             <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm sticky top-8">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Student Reviews</h2>
               <div className="text-center py-12">
@@ -118,8 +177,8 @@ export default async function ProfessorProfilePage({ params }: Props) {
                 <p className="text-sm text-gray-400 mt-1">Be the first to share your experience!</p>
               </div>
             </div>
-          </div>
 
+          </div>
         </div>
       </div>
     </main>
