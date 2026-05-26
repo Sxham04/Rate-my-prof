@@ -20,9 +20,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // Block sign-in if email is not a college email
     async signIn({ user }) {
       const email = user.email ?? ""
-    //   if (!email.endsWith(`@${ALLOWED_DOMAIN}`)) {
-    //     return false
-    //   }
+      if (!email.endsWith(`@${ALLOWED_DOMAIN}`)) {
+        return false
+      }
       return true
     },
 
