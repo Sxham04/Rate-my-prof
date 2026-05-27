@@ -15,10 +15,10 @@ export default function LoginPage() {
     e.preventDefault()
     setError("")
 
-    if (!email.endsWith(`@${ALLOWED_DOMAIN}`)) {
-      setError("Only @dituniversity.edu.in email addresses are allowed.")
-      return
-    }
+    // if (!email.endsWith(`@${ALLOWED_DOMAIN}`)) {
+    //   setError("Only @dituniversity.edu.in email addresses are allowed.")
+    //   return
+    // }
 
     setLoading(true)
     const result = await signIn("resend", {
