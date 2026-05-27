@@ -27,17 +27,21 @@ model Professor {
 }
 
 model Review {
-  id           String    @id @default(cuid())
-  professorId  String
-  professor    Professor @relation(fields: [professorId], references: [id])
-  userId       String
-  user         User      @relation(fields: [userId], references: [id])
-  rating       Int       
-  difficulty   Int       
-  content      String    @db.Text
-  courseCode   String?
-  isAnonymous  Boolean   @default(true)
-  createdAt    DateTime  @default(now())
+  id                String    @id @default(cuid())
+  professorId       String
+  professor         Professor @relation(fields: [professorId], references: [id])
+  userId            String
+  user              User      @relation(fields: [userId], references: [id])
+  
+  teachingQuality   Int       // 1-5
+  approachability   Int       // 1-5
+  fairness          Int       // 1-5
+  overallRating     Float     // auto-computed average of the three
+
+  content           String?   @db.Text
+  courseTaken       String?
+  isAnonymous       Boolean   @default(true)
+  createdAt         DateTime  @default(now())
 }
 
 // --- NEXTAUTH MODELS (Required for Magic Links / Google Login) ---

@@ -1,46 +1,72 @@
-import { prisma } from '../../../lib/db'
+import { prisma } from '@/lib/db'
+import { auth } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Metadata } from 'next'
+import RateButton from '@/components/reviews/RateButton'
+import ReviewList from '@/components/reviews/ReviewList'
 
 interface Props {
-  params: Promise<{
-    id: string
-  }>
+  params: Promise<{ id: string }>
 }
 
-// 1. Dynamic Metadata for Browser Tab Titles
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const resolvedParams = await params
-  const prof = await prisma.professor.findUnique({
-    where: { id: resolvedParams.id },
-    select: { name: true }
-  })
-  
+  const { id } = await params
+  const prof = await prisma.professor.findUnique({ where: { id }, select: { name: true } })
   return {
     title: prof ? `${prof.name} — DIT University Reviews` : 'Professor Not Found',
   }
 }
 
 export default async function ProfessorProfilePage({ params }: Props) {
-  const resolvedParams = await params
+  const { id } = await params
+  const session = await auth()
 
-  // Ensure your Prisma schema has qualification and specialisation if you are querying them!
   const professor = await prisma.professor.findUnique({
-    where: { id: resolvedParams.id },
-    // include: { reviews: true } <-- We will uncomment this when reviews exist!
+    where: { id },
+    include: {
+      reviews: {
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { name: true } } },
+      },
+    },
   })
 
-  if (!professor) {
-    notFound()
-  }
+  if (!professor) notFound()
+
+  // Compute aggregated ratings
+  const reviewCount = professor.reviews.length
+  const avgOverall = reviewCount
+    ? (professor.reviews.reduce((sum, r) => sum + r.overallRating, 0) / reviewCount).toFixed(1)
+    : null
+  const avgTeaching = reviewCount
+    ? (professor.reviews.reduce((sum, r) => sum + r.teachingQuality, 0) / reviewCount).toFixed(1)
+    : null
+  const avgApproach = reviewCount
+    ? (professor.reviews.reduce((sum, r) => sum + r.approachability, 0) / reviewCount).toFixed(1)
+    : null
+  const avgFairness = reviewCount
+    ? (professor.reviews.reduce((sum, r) => sum + r.fairness, 0) / reviewCount).toFixed(1)
+    : null
+
+  // Check if logged-in user already reviewed
+  const hasAlreadyReviewed = session?.user?.id
+    ? professor.reviews.some((r) => r.userId === session.user.id)
+    : false
+
+  const ratingColor = avgOverall
+    ? parseFloat(avgOverall) >= 4
+      ? 'text-emerald-600'
+      : parseFloat(avgOverall) >= 3
+      ? 'text-amber-500'
+      : 'text-red-500'
+    : 'text-gray-300'
 
   return (
     <main className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-5xl mx-auto px-6">
-        
-        {/* Back Button */}
+
         <Link href="/professors" className="text-sm text-blue-600 hover:underline mb-8 inline-block">
           &larr; Back to all professors
         </Link>
@@ -48,19 +74,17 @@ export default async function ProfessorProfilePage({ params }: Props) {
         {/* Profile Header Card */}
         <div className="bg-white border border-gray-200 rounded-3xl p-8 md:p-12 shadow-sm mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-            
-            {/* Left: Info & Avatar */}
+
+            {/* Left: Avatar + Info */}
             <div className="flex flex-col md:flex-row gap-6 items-start">
-              
-              {/* Large Avatar using next/image */}
               <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-100 flex-shrink-0 border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
                 {professor.photoUrl ? (
-                  <Image 
-                    src={professor.photoUrl} 
-                    alt={professor.name} 
-                    fill 
+                  <Image
+                    src={professor.photoUrl}
+                    alt={professor.name}
+                    fill
                     sizes="(max-width: 768px) 96px, 128px"
-                    className="object-cover" 
+                    className="object-cover"
                   />
                 ) : (
                   <svg className="w-12 h-12 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
@@ -69,7 +93,6 @@ export default async function ProfessorProfilePage({ params }: Props) {
                 )}
               </div>
 
-              {/* Text Data */}
               <div className="pt-2">
                 <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">{professor.name}</h1>
                 {professor.designation && (
@@ -77,41 +100,51 @@ export default async function ProfessorProfilePage({ params }: Props) {
                 )}
                 <div className="mt-4 flex flex-col gap-2 text-gray-600">
                   {professor.school && (
-                    <p className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-900">School:</span> {professor.school}
-                    </p>
+                    <p><span className="font-semibold text-gray-900">School:</span> {professor.school}</p>
                   )}
                   {professor.department && (
-                    <p className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-900">Department:</span> {professor.department}
-                    </p>
+                    <p><span className="font-semibold text-gray-900">Department:</span> {professor.department}</p>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Right: Rating Stub */}
+            {/* Right: Rating Card */}
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 text-center min-w-[200px] w-full md:w-auto flex flex-col">
-              <div className="text-5xl font-black text-gray-300 mb-2">N/A</div>
-              <p className="text-sm text-gray-500 font-medium">0 Ratings</p>
-              
-              {/* Functional Login Routing */}
-              <Link 
-                href="/login" 
-                className="mt-4 w-full bg-blue-600 hover:bg-blue-700 transition-colors text-white font-bold py-2 px-4 rounded-xl text-center"
-              >
-                Rate Professor
-              </Link>
-              <p className="text-xs text-gray-400 mt-2">Login to leave a review</p>
+              <div className={`text-5xl font-black mb-1 ${ratingColor}`}>
+                {avgOverall ?? 'N/A'}
+              </div>
+              <p className="text-sm text-gray-500 font-medium mb-2">
+                {reviewCount} {reviewCount === 1 ? 'Rating' : 'Ratings'}
+              </p>
+
+              {/* Breakdown */}
+              {reviewCount > 0 && (
+                <div className="text-xs text-gray-500 space-y-1 mb-4 text-left border-t border-gray-200 pt-3">
+                  <div className="flex justify-between"><span>Teaching</span><span className="font-semibold text-gray-700">{avgTeaching}</span></div>
+                  <div className="flex justify-between"><span>Approachability</span><span className="font-semibold text-gray-700">{avgApproach}</span></div>
+                  <div className="flex justify-between"><span>Fairness</span><span className="font-semibold text-gray-700">{avgFairness}</span></div>
+                </div>
+              )}
+
+              <RateButton
+                professorId={professor.id}
+                professorName={professor.name}
+                isLoggedIn={!!session?.user}
+                hasAlreadyReviewed={hasAlreadyReviewed}
+              />
+              {!session?.user && (
+                <p className="text-xs text-gray-400 mt-2">Login to leave a review</p>
+              )}
             </div>
-            
+
           </div>
         </div>
 
         {/* Details Layout */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          
-          {/* Left Column: Bio & Courses */}
+
+          {/* Left: Bio + Courses */}
           <div className="md:col-span-2 space-y-8">
             {professor.bio && (
               <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
@@ -132,53 +165,36 @@ export default async function ProfessorProfilePage({ params }: Props) {
                 </div>
               </div>
             )}
+
+            {/* Reviews */}
+            <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">
+                Student Reviews
+                {reviewCount > 0 && (
+                  <span className="ml-2 text-sm font-normal text-gray-400">({reviewCount})</span>
+                )}
+              </h2>
+              <ReviewList reviews={professor.reviews} />
+            </div>
           </div>
 
-          {/* Right Column: Sidebar Data & Reviews */}
-          <div className="md:col-span-1 space-y-8">
-            
-            {/* Credentials Card (Optional metadata rendering) */}
-            {(professor.email || (professor as any).qualification || (professor as any).specialisation) && (
+          {/* Right: Credentials */}
+          <div className="md:col-span-1">
+            {professor.email && (
               <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Credentials</h2>
                 <div className="space-y-4 text-sm text-gray-600">
-                  {professor.email && (
-                    <div>
-                      <span className="block font-semibold text-gray-900 mb-1">Email</span>
-                      <a href={`mailto:${professor.email}`} className="text-blue-600 hover:underline break-all">
-                        {professor.email}
-                      </a>
-                    </div>
-                  )}
-                  {(professor as any).qualification && (
-                    <div>
-                      <span className="block font-semibold text-gray-900 mb-1">Qualification</span>
-                      <p>{(professor as any).qualification}</p>
-                    </div>
-                  )}
-                  {(professor as any).specialisation && (
-                    <div>
-                      <span className="block font-semibold text-gray-900 mb-1">Specialisation</span>
-                      <p>{(professor as any).specialisation}</p>
-                    </div>
-                  )}
+                  <div>
+                    <span className="block font-semibold text-gray-900 mb-1">Email</span>
+                    <a href={`mailto:${professor.email}`} className="text-blue-600 hover:underline break-all">
+                      {professor.email}
+                    </a>
+                  </div>
                 </div>
               </div>
             )}
-
-            {/* Reviews Placeholder */}
-            <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm sticky top-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Student Reviews</h2>
-              <div className="text-center py-12">
-                <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                </svg>
-                <p className="text-gray-500 font-medium">No reviews yet.</p>
-                <p className="text-sm text-gray-400 mt-1">Be the first to share your experience!</p>
-              </div>
-            </div>
-
           </div>
+
         </div>
       </div>
     </main>
