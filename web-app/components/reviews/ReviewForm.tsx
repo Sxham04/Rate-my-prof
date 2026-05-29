@@ -16,7 +16,6 @@ const CHARACTERISTICS = [
 ] as const
 
 type RatingKey = "teachingQuality" | "approachability" | "fairness"
-
 const LABELS = ["", "Poor", "Fair", "Good", "Great", "Excellent"]
 
 function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -36,8 +35,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
           >
             <svg
               className={`w-7 h-7 transition-colors ${star <= active ? "text-amber-400" : "text-gray-200"}`}
-              fill="currentColor"
-              viewBox="0 0 20 20"
+              fill="currentColor" viewBox="0 0 20 20"
             >
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
             </svg>
@@ -72,10 +70,7 @@ export default function ReviewForm({ professorId, professorName, onClose }: Prop
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
-    if (!allRated) {
-      setError("Please rate all three characteristics.")
-      return
-    }
+    if (!allRated) { setError("Please rate all three characteristics."); return }
     setSubmitting(true)
     const res = await fetch("/api/reviews", {
       method: "POST",
@@ -84,10 +79,7 @@ export default function ReviewForm({ professorId, professorName, onClose }: Prop
     })
     const data = await res.json()
     setSubmitting(false)
-    if (!res.ok) {
-      setError(data.error || "Something went wrong.")
-      return
-    }
+    if (!res.ok) { setError(data.error || "Something went wrong."); return }
     onClose()
     router.refresh()
   }
@@ -116,7 +108,7 @@ export default function ReviewForm({ professorId, professorName, onClose }: Prop
           </div>
         </div>
 
-        {/* Scrollable body */}
+        {/* Body */}
         <div className="px-8 py-6 space-y-6 overflow-y-auto max-h-[65vh]">
 
           {/* Characteristics */}
@@ -135,7 +127,7 @@ export default function ReviewForm({ professorId, professorName, onClose }: Prop
             ))}
           </div>
 
-          {/* Overall rating preview */}
+          {/* Overall preview */}
           {overallPreview && (
             <div className="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3">
               <span className="text-sm font-semibold text-blue-700">Overall Rating</span>
@@ -160,7 +152,7 @@ export default function ReviewForm({ professorId, professorName, onClose }: Prop
             />
           </div>
 
-          {/* Written review */}
+          {/* Review text */}
           <div className="space-y-1.5">
             <p className="text-sm font-bold text-gray-900 text-left">
               Review <span className="text-gray-500 font-normal">(optional)</span>

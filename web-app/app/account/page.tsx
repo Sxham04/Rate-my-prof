@@ -1,8 +1,8 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { signOut } from '@/lib/auth'
+import AccountClient from '@/components/account/AccountClient'
 
 export default async function AccountPage() {
   const session = await auth()
@@ -14,83 +14,60 @@ export default async function AccountPage() {
     include: { professor: { select: { id: true, name: true, school: true } } },
   })
 
+  const initial = session.user.email?.[0]?.toUpperCase() ?? 'U'
+
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-2xl mx-auto px-6">
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-6 py-10">
 
-        {/* Header */}
-        <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Account</h1>
-              <p className="text-gray-500 text-sm mt-1">{session.user.email}</p>
-            </div>
-            <form action={async () => {
-              "use server"
-              await signOut({ redirectTo: '/' })
-            }}>
-              <button
-                type="submit"
-                className="text-sm text-red-500 hover:text-red-700 font-medium border border-red-200 px-4 py-2 rounded-xl hover:bg-red-50 transition"
-              >
-                Sign Out
-              </button>
-            </form>
-          </div>
-        </div>
+        {/* Page header */}
+        <h1 className="text-2xl font-extrabold text-gray-900 mb-8">My Account</h1>
 
-        {/* Reviews */}
-        <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">
-            My Reviews
-            <span className="ml-2 text-sm font-normal text-gray-400">({reviews.length})</span>
-          </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-          {reviews.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-gray-500">You have not reviewed any professors yet.</p>
-              <Link href="/professors" className="text-blue-600 text-sm hover:underline mt-2 inline-block">
-                Browse professors →
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {reviews.map((review) => (
-                <div key={review.id} className="border border-gray-100 rounded-2xl p-5 bg-gray-50">
-                  <div className="flex items-start justify-between mb-2">
-                    <Link href={`/professors/${review.professor.id}`} className="hover:underline">
-                      <p className="font-semibold text-gray-900">{review.professor.name}</p>
-                      <p className="text-xs text-gray-400">{review.professor.school}</p>
-                    </Link>
-                    <span className={`text-sm font-black px-2.5 py-0.5 rounded-lg border ${
-                      review.overallRating >= 4
-                        ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
-                        : review.overallRating >= 3
-                        ? 'text-amber-700 bg-amber-50 border-amber-200'
-                        : 'text-red-600 bg-red-50 border-red-200'
-                    }`}>
-                      {review.overallRating.toFixed(1)}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500 space-y-0.5 mb-2">
-                    <div className="flex gap-4">
-                      <span>Teaching: <strong>{review.teachingQuality}</strong></span>
-                      <span>Approachability: <strong>{review.approachability}</strong></span>
-                      <span>Fairness: <strong>{review.fairness}</strong></span>
-                    </div>
-                  </div>
-                  {review.courseTaken && (
-                    <span className="inline-block text-xs bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-lg mb-2">
-                      {review.courseTaken}
-                    </span>
-                  )}
-                  <p className="text-sm text-gray-700 leading-relaxed">{review.content}</p>
+          {/* Sidebar */}
+          <div className="md:col-span-1 space-y-4">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6">
+              {/* Avatar */}
+              <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-black mb-4">
+                {initial}
+              </div>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Signed in as</p>
+              <p className="text-sm font-semibold text-gray-900 break-all">{session.user.email}</p>
+
+              <div className="mt-4 pt-4 border-t border-gray-100 space-y-1 text-sm text-gray-500">
+                <div className="flex justify-between">
+                  <span>Reviews</span>
+                  <span className="font-semibold text-gray-900">{reviews.length}</span>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
 
+              <form action={async () => {
+                "use server"
+                await signOut({ redirectTo: '/' })
+              }} className="mt-5">
+                <button
+                  type="submit"
+                  className="w-full text-sm font-semibold text-red-500 border border-red-200 px-4 py-2 rounded-xl hover:bg-red-50 transition"
+                >
+                  Sign Out
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Reviews */}
+          <div className="md:col-span-2">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-5">
+                My Reviews
+                <span className="ml-2 text-xs font-normal text-gray-400">({reviews.length})</span>
+              </h2>
+              <AccountClient reviews={reviews} />
+            </div>
+          </div>
+
+        </div>
       </div>
     </main>
   )
