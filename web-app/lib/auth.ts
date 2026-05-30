@@ -17,21 +17,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
 
   callbacks: {
-    // Block sign-in if email is not a college email
     async signIn({ user }) {
       // const email = user.email ?? ""
-      // // if (!email.endsWith(`@${ALLOWED_DOMAIN}`)) {
-      // //   return false
-      // // }
+      // if (!email.endsWith(`@${ALLOWED_DOMAIN}`)) return false
       return true
     },
 
-    // Expose user id on the session object
     async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id
       }
       return session
+    },
+
+    async redirect({ url, baseUrl }) {
+      return baseUrl
     },
   },
 

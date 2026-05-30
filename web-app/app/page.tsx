@@ -1,5 +1,33 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
+import FeedbackModal from '@/components/FeedbackModal'
+
+const FAQS = [
+  {
+    q: "Why are some professors missing?",
+    a: "Our data was collected from the official DIT University website. Professors whose profiles were not publicly listed or were added after our last update may not appear. We're working on keeping the list current."
+  },
+  {
+    q: "Why are some courses taught missing or incorrect?",
+    a: "Course information was scraped automatically and may be incomplete or outdated. Professors sometimes teach courses not listed on their official profile. If you spot an error, please report it using the link below."
+  },
+  {
+    q: "Why are some department names wrong?",
+    a: "Department names were extracted from professor bios and may contain inconsistencies from the source data. We've normalised them as best we can, but some edge cases remain."
+  },
+  {
+    q: "Are reviews anonymous?",
+    a: "Yes — by default all reviews are posted anonymously. You can choose to display your name when submitting a review, but your identity is never shared without your consent."
+  },
+  {
+    q: "Who can leave a review?",
+    a: "Only students with a verified @dituniversity.edu.in email address can submit reviews. This ensures all feedback comes from real DIT University students."
+  },
+  {
+    q: "Can a professor be removed or edited?",
+    a: "If you believe a professor's information is incorrect or a profile should be removed, please use the Report an Issue link below and we'll look into it."
+  },
+]
 
 export default async function HomePage() {
   const professorCount = await prisma.professor.count()
@@ -26,8 +54,7 @@ export default async function HomePage() {
           <p className="mt-4 text-blue-100 text-base max-w-xl mx-auto leading-relaxed">
             Real ratings from real students. Search any professor and see what your peers actually think.
           </p>
-          
-          {/* Flex wrapper to seamlessly space the search bar and floating browse button */}
+
           <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-xl mx-auto items-stretch justify-center">
             <form action="/professors" method="get" className="flex flex-1 shadow-lg rounded-2xl overflow-hidden">
               <input
@@ -44,8 +71,6 @@ export default async function HomePage() {
                 Search
               </button>
             </form>
-
-            {/* Separate, floating "Browse all" button with matching rounded design */}
             <Link
               href="/professors"
               className="bg-white hover:bg-gray-50 text-blue-700 text-sm font-semibold px-6 py-3.5 shadow-lg rounded-2xl transition whitespace-nowrap flex items-center justify-center border border-blue-100/20"
@@ -121,6 +146,21 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section className="border-b border-gray-100">
+        <div className="max-w-3xl mx-auto px-6 py-16">
+          <h2 className="text-xl font-bold text-gray-900 text-center mb-10">Frequently asked questions</h2>
+          <div className="space-y-6">
+            {FAQS.map(({ q, a }) => (
+              <div key={q} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
+                <p className="text-sm font-semibold text-gray-900 mb-2">{q}</p>
+                <p className="text-sm text-gray-500 leading-relaxed">{a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="max-w-2xl mx-auto px-6 py-16 text-center">
         <h2 className="text-2xl font-bold text-gray-900">Ready to find your professor?</h2>
@@ -134,6 +174,20 @@ export default async function HomePage() {
           Browse all professors →
         </Link>
       </section>
+
+      {/* Footer */}
+    <footer className="border-t border-gray-100 bg-gray-50">
+      <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p className="text-xs text-gray-400 text-center sm:text-left">
+          Built by DIT University students. Data sourced from{' '}
+          <a href="https://www.dituniversity.edu.in/faculty" target="_blank" rel="noopener noreferrer" className="hover:underline">
+            dituniversity.edu.in
+          </a>
+          . Not officially affiliated with DIT University.
+        </p>
+        <FeedbackModal />
+      </div>
+    </footer>
 
     </main>
   )
