@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    domains: ['www.dituniversity.edu.in'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -11,5 +12,7 @@ const nextConfig: NextConfig = {
     ],
   },
 };
+
+
 
 export default nextConfig;
