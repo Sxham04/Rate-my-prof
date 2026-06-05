@@ -1,4 +1,4 @@
-# DIT University — Rate My Professor
+# Rate My Professor
 
 A student-built platform for DIT University students to anonymously rate and review their professors. Built to help students make informed decisions when selecting courses and professors each semester.
 
