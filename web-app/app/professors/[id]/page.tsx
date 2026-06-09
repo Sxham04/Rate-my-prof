@@ -35,98 +35,96 @@ export default async function ProfessorProfilePage({ params }: Props) {
 
   if (!professor) notFound()
 
-  // Compute aggregated ratings
   const reviewCount = professor.reviews.length
-  const avgOverall = reviewCount
-    ? (professor.reviews.reduce((sum, r) => sum + r.overallRating, 0) / reviewCount).toFixed(1)
-    : null
-  const avgTeaching = reviewCount
-    ? (professor.reviews.reduce((sum, r) => sum + r.teachingQuality, 0) / reviewCount).toFixed(1)
-    : null
-  const avgApproach = reviewCount
-    ? (professor.reviews.reduce((sum, r) => sum + r.approachability, 0) / reviewCount).toFixed(1)
-    : null
-  const avgFairness = reviewCount
-    ? (professor.reviews.reduce((sum, r) => sum + r.fairness, 0) / reviewCount).toFixed(1)
-    : null
+  const avg = (field: 'overallRating' | 'teachingQuality' | 'approachability' | 'fairness') =>
+    reviewCount
+      ? (professor.reviews.reduce((s, r) => s + r[field], 0) / reviewCount).toFixed(1)
+      : null
 
-  // Check if logged-in user already reviewed
+  const avgOverall  = avg('overallRating')
+  const avgTeaching = avg('teachingQuality')
+  const avgApproach = avg('approachability')
+  const avgFairness = avg('fairness')
+
   const hasAlreadyReviewed = session?.user?.id
     ? professor.reviews.some((r) => r.userId === session.user.id)
     : false
 
   const ratingColor = avgOverall
-    ? parseFloat(avgOverall) >= 4
-      ? 'text-emerald-600'
-      : parseFloat(avgOverall) >= 3
-      ? 'text-amber-500'
-      : 'text-red-500'
+    ? parseFloat(avgOverall) >= 4 ? 'text-emerald-600'
+    : parseFloat(avgOverall) >= 3 ? 'text-amber-500'
+    : 'text-red-500'
     : 'text-gray-300'
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-5xl mx-auto px-6">
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-6">
 
-        <Link href="/professors" className="text-sm text-blue-600 hover:underline mb-8 inline-block">
-          &larr; Back to all professors
+        {/* Back */}
+        <Link href="/professors" className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition mb-4">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          All professors
         </Link>
 
-        {/* Profile Header Card */}
-        <div className="bg-white border border-gray-200 rounded-3xl p-8 md:p-12 shadow-sm mb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start gap-8">
+        {/* Profile header */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-6 mb-4">
+          <div className="flex flex-col md:flex-row gap-4 items-start">
 
-            {/* Left: Avatar + Info */}
-            <div className="flex flex-col md:flex-row gap-6 items-start">
-              <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-100 flex-shrink-0 border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
+            {/* Avatar + Info */}
+            <div className="flex gap-3 items-start flex-1 min-w-0">
+              <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
                 {professor.photoUrl ? (
-                  <Image
-                    src={professor.photoUrl}
-                    alt={professor.name}
-                    fill
-                    sizes="(max-width: 768px) 96px, 128px"
-                    className="object-cover"
-                  />
+                  <Image src={professor.photoUrl} alt={professor.name} fill sizes="64px" className="object-cover" />
                 ) : (
-                  <svg className="w-12 h-12 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                  </svg>
+                  <div className="w-full h-full flex items-center justify-center">
+                    <svg className="w-7 h-7 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                 )}
               </div>
 
-              <div className="pt-2">
-                <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">{professor.name}</h1>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg md:text-xl font-extrabold text-gray-900 leading-tight">{professor.name}</h1>
                 {professor.designation && (
-                  <p className="text-xl text-blue-600 font-medium mt-2">{professor.designation}</p>
+                  <p className="text-blue-600 font-medium text-xs mt-0.5">{professor.designation}</p>
                 )}
-                <div className="mt-4 flex flex-col gap-2 text-gray-600">
-                  {professor.school && (
-                    <p><span className="font-semibold text-gray-900">School:</span> {professor.school}</p>
-                  )}
-                  {professor.department && (
-                    <p><span className="font-semibold text-gray-900">Department:</span> {professor.department}</p>
+                <div className="mt-1.5 flex flex-col gap-0.5 text-xs text-gray-500">
+                  {professor.school && <span>{professor.school}</span>}
+                  {professor.department && <span>{professor.department}</span>}
+                  {professor.email && (
+                    <a href={`mailto:${professor.email}`} className="text-blue-600 hover:underline truncate">
+                      {professor.email}
+                    </a>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Right: Rating Card */}
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 text-center min-w-[200px] w-full md:w-auto flex flex-col">
-              <div className={`text-5xl font-black mb-1 ${ratingColor}`}>
+            {/* Rating card */}
+            <div className="w-full md:w-40 flex-shrink-0 border border-gray-200 rounded-xl p-3 text-center bg-gray-50">
+              <div className={`text-3xl font-black mb-0.5 ${ratingColor}`}>
                 {avgOverall ?? 'N/A'}
               </div>
-              <p className="text-sm text-gray-500 font-medium mb-2">
-                {reviewCount} {reviewCount === 1 ? 'Rating' : 'Ratings'}
+              <p className="text-xs text-gray-400 mb-2">
+                {reviewCount} {reviewCount === 1 ? 'rating' : 'ratings'}
               </p>
-
-              {/* Breakdown */}
               {reviewCount > 0 && (
-                <div className="text-xs text-gray-500 space-y-1 mb-4 text-left border-t border-gray-200 pt-3">
-                  <div className="flex justify-between"><span>Teaching</span><span className="font-semibold text-gray-700">{avgTeaching}</span></div>
-                  <div className="flex justify-between"><span>Approachability</span><span className="font-semibold text-gray-700">{avgApproach}</span></div>
-                  <div className="flex justify-between"><span>Fairness</span><span className="font-semibold text-gray-700">{avgFairness}</span></div>
+                <div className="text-xs text-gray-500 space-y-1 text-left border-t border-gray-200 pt-2 mb-2">
+                  {[
+                    { label: 'Teaching', val: avgTeaching },
+                    { label: 'Approachability', val: avgApproach },
+                    { label: 'Fairness', val: avgFairness },
+                  ].map(({ label, val }) => (
+                    <div key={label} className="flex justify-between">
+                      <span>{label}</span>
+                      <span className="font-semibold text-gray-700">{val}</span>
+                    </div>
+                  ))}
                 </div>
               )}
-
               <RateButton
                 professorId={professor.id}
                 professorName={professor.name}
@@ -134,31 +132,32 @@ export default async function ProfessorProfilePage({ params }: Props) {
                 hasAlreadyReviewed={hasAlreadyReviewed}
               />
               {!session?.user && (
-                <p className="text-xs text-gray-400 mt-2">Login to leave a review</p>
+                <p className="text-xs text-gray-400 mt-1.5">Login to leave a review</p>
               )}
             </div>
 
           </div>
         </div>
 
-        {/* Details Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Body — single column on mobile, 3-col on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-          {/* Left: Bio + Courses */}
-          <div className="md:col-span-2 space-y-8">
+          {/* Main content */}
+          <div className="md:col-span-2 space-y-4">
+
             {professor.bio && (
-              <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">About</h2>
-                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{professor.bio}</p>
+              <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-5">
+                <h2 className="text-sm font-bold text-gray-900 mb-2">About</h2>
+                <p className="text-xs text-gray-600 leading-relaxed">{professor.bio}</p>
               </div>
             )}
 
             {professor.courses.length > 0 && (
-              <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Courses Taught</h2>
-                <div className="flex flex-wrap gap-2">
+              <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-5">
+                <h2 className="text-sm font-bold text-gray-900 mb-2">Courses Taught</h2>
+                <div className="flex flex-wrap gap-1.5">
                   {professor.courses.map((course, idx) => (
-                    <span key={idx} className="bg-blue-50 text-blue-700 font-medium px-4 py-2 rounded-xl border border-blue-100">
+                    <span key={idx} className="bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-lg border border-blue-100">
                       {course}
                     </span>
                   ))}
@@ -166,30 +165,28 @@ export default async function ProfessorProfilePage({ params }: Props) {
               </div>
             )}
 
-            {/* Reviews */}
-            <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">
+            <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-5">
+              <h2 className="text-sm font-bold text-gray-900 mb-3">
                 Student Reviews
                 {reviewCount > 0 && (
-                  <span className="ml-2 text-sm font-normal text-gray-400">({reviewCount})</span>
+                  <span className="ml-2 text-xs font-normal text-gray-400">({reviewCount})</span>
                 )}
               </h2>
               <ReviewList reviews={professor.reviews} />
             </div>
+
           </div>
 
-          {/* Right: Credentials */}
-          <div className="md:col-span-1">
+          {/* Sidebar — shows above reviews on mobile via order */}
+          <div className="md:col-span-1 order-first md:order-none">
             {professor.email && (
-              <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Credentials</h2>
-                <div className="space-y-4 text-sm text-gray-600">
-                  <div>
-                    <span className="block font-semibold text-gray-900 mb-1">Email</span>
-                    <a href={`mailto:${professor.email}`} className="text-blue-600 hover:underline break-all">
-                      {professor.email}
-                    </a>
-                  </div>
+              <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-5">
+                <h2 className="text-sm font-bold text-gray-900 mb-2">Credentials</h2>
+                <div className="text-xs text-gray-600">
+                  <span className="block font-semibold text-gray-800 mb-1">Email</span>
+                  <a href={`mailto:${professor.email}`} className="text-blue-600 hover:underline break-all">
+                    {professor.email}
+                  </a>
                 </div>
               </div>
             )}
